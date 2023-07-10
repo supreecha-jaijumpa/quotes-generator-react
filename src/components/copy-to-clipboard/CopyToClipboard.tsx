@@ -12,7 +12,7 @@ const CopyToClipboard: FC<CopyToClipboardProps> = ({ text }) => {
   const [copied, setCopied] = useState<boolean>(false);
 
   const handleCopy = useCallback(() => {
-    copy(text).catch((error) => alert(error));
+    void copy(text);
     setCopied(true);
     setTimeout(() => {
       setCopied(false);
