@@ -1,41 +1,39 @@
 import { FC, useCallback, useEffect, useState } from "react";
-import useSWRImmutable from "swr/immutable";
+import axios from "axios";
 
 import QuoteCard from "./components/quote-card/QuoteCard";
-import { fetcher } from "./utils/fetcher";
 import { type Quote } from "./types/quote";
 
 const App: FC = () => {
-  const { data, isLoading } = useSWRImmutable<Quote[]>(
-    "https://type.fit/api/quotes",
-    fetcher
-  );
-
+  const [quotes, setQuotes] = useState<Quote[]>();
   const [quote, setQuote] = useState<Quote>();
+  const [error, setError] = useState<string>();
 
-  const newQuote = useCallback(() => {
-    if (!data || data.length === 0) {
-      setQuote(undefined);
-      return;
-    }
+  const handleNewQuote = useCallback((data: Quote[]) => {
     const newQuote = data[Math.floor(Math.random() * data.length)];
     setQuote(newQuote);
-  }, [data]);
+  }, []);
 
   useEffect(() => {
-    if (data && !quote) {
-      newQuote();
-    }
-  }, [data, quote, newQuote]);
+    axios
+      .get("https://type.fit/api/quotes")
+      .then(({ data }) => {
+        setQuotes(data as Quote[]);
+        handleNewQuote(data as Quote[]);
+      })
+      .catch((error) => setError(String(error)));
+  }, [handleNewQuote]);
 
-  let content = <>Not found any quotes data</>;
+  let content = <>loading...</>;
 
-  if (isLoading) {
-    content = <>Loading ...</>;
+  if (error) {
+    content = <>there was an error loading data</>;
   }
 
-  if (quote) {
-    content = <QuoteCard {...quote} onNew={newQuote} />;
+  if (quotes && quote) {
+    content = (
+      <QuoteCard {...quote} onNewQuote={() => handleNewQuote(quotes)} />
+    );
   }
 
   return (
